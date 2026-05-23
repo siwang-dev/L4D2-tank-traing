@@ -83,7 +83,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-    LoadTranslations("tank_reset.phrases");
+    LoadTranslations("tank_training.phrases");
 
     g_hTankPropsHitList = new ArrayList();
     g_smHittableResetProp = new StringMap();
