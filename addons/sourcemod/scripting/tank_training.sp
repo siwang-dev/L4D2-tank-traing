@@ -691,7 +691,7 @@ public Action Command_TankControlLock(int client, int args)
 
     bool enabled = !g_cvLockTankControl.BoolValue;
     g_cvLockTankControl.SetBool(enabled);
-    CPrintToChatAll("%t", enabled ? "Tank Lock Enabled" : "Tank Lock Disabled", client);
+    CPrintToChatAll("%t", enabled ? "Tank Lock Enabled" : "Tank Lock Disabled");
     return Plugin_Handled;
 }
 
@@ -769,6 +769,7 @@ public void Frame_ShowTankMenu(any userid)
         ShowTankMenu(client);
 }
 
+
 void ShowTankMenu(int client)
 {
     Menu menu = new Menu(TankMenuHandler);
@@ -823,6 +824,24 @@ void ShowTankMenu(int client)
     menu.Display(client, MENU_TIME_FOREVER);
 }
 
+public Action Timer_DoReset(Handle timer, any userid)
+{
+    int client = GetClientOfUserId(userid);
+    // Perform reset logic on next tick to avoid interfering with menu lifecycle.
+    ResetAllIronProps();
+    CPrintToChatAll("%t", "Reset All Hittables", client);
+    CPrintToChat(client, "%t", "Reset Hittables Count", g_IronCount);
+    return Plugin_Stop;
+}
+
+public Action Timer_ReopenTankMenu(Handle timer, any userid)
+{
+    int client = GetClientOfUserId(userid);
+    if (IsValidClient(client))
+        ShowTankMenu(client);
+    return Plugin_Stop;
+}
+
 public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 {
     switch (action)
@@ -838,6 +857,7 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
+                    delete menu;
                     return 0;
                 }
 
@@ -850,13 +870,17 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
+                    delete menu;
                     return 0;
                 }
-                
-                ResetAllIronProps();
-                CPrintToChatAll("%t", "Reset All Hittables", param1);
-                CPrintToChat(param1, "%t", "Reset Hittables Count", g_IronCount);
-                RedisplayTankMenu(param1);
+
+                // Delete current menu instance and schedule reset + reopen via timers.
+                delete menu;
+                // Small delay to let the command handler finish, then perform reset.
+                CreateTimer(0.01, Timer_DoReset, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
+                // Reopen menu after entities settle (longer delay).
+                CreateTimer(0.5, Timer_ReopenTankMenu, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
+                return 0;
             }
             else if (StrEqual(info, "become"))
             {
@@ -864,6 +888,7 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
+                    delete menu;
                     return 0;
                 }
                 
@@ -875,6 +900,7 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
+                    delete menu;
                     return 0;
                 }
                 
@@ -887,6 +913,7 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
+                    delete menu;
                     return 0;
                 }
 
@@ -1120,6 +1147,8 @@ bool BecomeInfectedDirect(int client, const char[] zombieClass, TankSpawnMode sp
     {
         return SpawnTankAtStoredFlow(client);
     }
+
+    // Continue with normal z_spawn path if not handling flow-spawn.
 
     int flags = GetCommandFlags("z_spawn");
     SetCommandFlags("z_spawn", flags & ~FCVAR_CHEAT);

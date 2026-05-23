@@ -191,6 +191,7 @@
 		"en"	"Spawn Tank By Flow (%d%%)"
 		"chi"	"以路程生成 Tank (%d%%)"
 	}
+
 	"Plugin Loaded"
 	{
 		"en"	"[Tank] Plugin loaded v%s"
@@ -205,8 +206,8 @@
 
 	"Reset All Hittables"
 	{
-		"en"	"[Tank] Reset %d Tank-hit hittables"
-		"chi"	"[Tank] 已重置 %d 个铁"
+		"en"	"{red}[Tank]{default} {yellow}%N{default} reset all hittables"
+		"chi"	"{red}[Tank]{default} {yellow}%N{default} 重置了所有铁"
 	}
 
 	"Precached Forklift"
@@ -226,76 +227,97 @@
 		"en"	"[Tank] Spawned physical forklift: %s (entity: %d)"
 		"chi"	"[Tank] 已生成叉车：%s (实体: %d)"
 	}
+
 	"All Survivors"
 	{
 		"en"	"All Survivors"
 		"chi"	"所有生还者"
 	}
+
 	"Force Started"
 	{
 		"en"	"{red}[Tank]{default} Admin {yellow}%N{default} forced the game to start!"
 		"chi"	"{red}[Tank]{default} 管理员 {yellow}%N{default} 强制开启了游戏！"
 	}
+
 	"Forklift Info Printed"
 	{
 		"en"	"[Tank] Found %d forklifts (check server console for details)"
 		"chi"	"[Tank] 发现 %d 个叉车（详情查看服务器控制台）"
 	}
+
 	"Forklift Reset"
 	{
 		"en"	"{red}[Tank]{default} Admin {yellow}%N{default} reset forklifts: {green}%d/%d{default} succeeded"
 		"chi"	"{red}[Tank]{default} 管理员 {yellow}%N{default} 重置叉车: {green}%d/%d{default} 成功"
 	}
+
 	"No Cursor Position"
 	{
 		"en"	"{red}[Tank]{default} Cannot determine aim position. Please aim at a valid surface."
 		"chi"	"{red}[Tank]{default} 无法确定瞄准位置，请将准星对准有效表面。"
 	}
+
 	"No Survivors Available"
 	{
 		"en"	"No survivors available"
 		"chi"	"没有可用的生还者"
 	}
+
 	"Noclip Disabled"
 	{
 		"en"	"{red}[Tank]{default} Noclip disabled."
 		"chi"	"{red}[Tank]{default} 穿墙模式已关闭。"
 	}
+
 	"Noclip Enabled"
 	{
 		"en"	"{red}[Tank]{default} Noclip enabled."
 		"chi"	"{red}[Tank]{default} 穿墙模式已开启。"
 	}
+
 	"Reset Hittables Count"
 	{
 		"en"	"[Tank] Total hittables on map: %d"
 		"chi"	"[Tank] 地图中铁的总数: %d"
 	}
+
 	"Survivor Teleport Menu Title"
 	{
 		"en"	"=== Teleport Survivors ==="
 		"chi"	"=== 传送生还者 ==="
 	}
+
 	"Tank Killed"
 	{
 		"en"	"{red}[Tank]{default} Tank ({yellow}%N{default}) has been killed!"
 		"chi"	"{red}[Tank]{default} Tank ({yellow}%N{default}) 已被击杀！"
 	}
+
 	"Tank Lock Enabled"
 	{
-		"en"	"{red}[Tank]{default}  {yellow}%N{default} %s lock Tank control "
-		"chi"	"{red}[Tank]{default}  {yellow}%N{default} %s 锁定了tank控制权"
+		"en"	"{red}[Tank]{default} {yellow}%N{default} enabled Tank control lock"
+		"chi"	"{red}[Tank]{default} {yellow}%N{default} 开启了 Tank 控制权锁定"
 	}
+
+	"Tank Lock Disabled"
+	{
+		"en"	"{red}[Tank]{default} {yellow}%N{default} disabled Tank control lock"
+		"chi"	"{red}[Tank]{default} {yellow}%N{default} 关闭了 Tank 控制权锁定"
+	}
+
 	"Target Survivor Unavailable"
 	{
 		"en"	"{red}[Tank]{default} Target survivor is no longer available."
 		"chi"	"{red}[Tank]{default} 目标生还者已不再可用。"
 	}
+
 	"Teleported All Survivors"
 	{
 		"en"	"{red}[Tank]{default} {yellow}%N{default} teleported {green}%d{default} survivors to cursor position."
 		"chi"	"{red}[Tank]{default} {yellow}%N{default} 将 {green}%d{default} 名生还者传送到鼠标位置。"
 	}
+
 	"Teleported Survivor"
 	{
 		"en"	"{red}[Tank]{default} {yellow}%N{default} teleported {yellow}%N{default} to cursor position."
