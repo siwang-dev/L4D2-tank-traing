@@ -38,12 +38,34 @@ enum struct HittableResetProp {
     char modelName[128];
     float origin[3];
     float angles[3];
+    float velocity[3];
+    float angularVelocity[3];
+    float mins[3];
+    float maxs[3];
     int spawnFlags;
-    int renderColor;
+    int renderColor[4];
+    int renderMode;
+    int renderFx;
+    int effects;
+    int skin;
+    int body;
+    int sequence;
+    int collisionGroup;
+    int solidType;
+    int solidFlags;
+    int moveType;
+    int health;
+    float gravity;
+    float mass;
+    float friction;
+    float elasticity;
+    float damageScale;
     float fadeMinDist;
     float fadeMaxDist;
     int hammerId;
     char targetName[64];
+    char parentName[64];
+    bool hasTankGlow;
     bool isForklift;
 }
 
@@ -58,6 +80,7 @@ int g_IronCount = 0;
 ArrayList g_hTankPropsHitList;
 StringMap g_smHittableResetProp;
 bool g_bTankSpawned = false;
+int g_iTankHitGameTick = 0;
 
 int g_iPendingTank[MAXPLAYERS + 1];
 bool g_bNoClip[MAXPLAYERS + 1];
@@ -98,6 +121,7 @@ public void OnPluginStart()
     RegConsoleCmd("sm_tlock", Command_TankControlLock, "Toggle Tank control lock");
     RegConsoleCmd("sm_forklift_info", Command_ForkliftInfo, "Print recorded forklift information");
     RegConsoleCmd("sm_forklift_resetpos", Command_ForkliftResetPos, "Reset all forklift positions");
+    RegConsoleCmd("sm_tvehicleinfo", Command_HittableInfo, "Open hittable debug information");
 
     HookEvent("player_spawn", Event_PlayerSpawn);
     HookEvent("player_death", Event_PlayerDeath);
@@ -297,52 +321,53 @@ void ClearIronData()
 
 // ==================== Manual hittable reset ====================
 
-void ResetAllIronProps()
+int ResetAllIronProps()
 {
     int resetCount = ResetAllHittable();
     PrintToServer("[TankReset] %T", "Reset Hittables Log", LANG_SERVER, resetCount);
     EmitSoundToAll("buttons/button14.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
-    return;
+    return resetCount;
 }
 
 int ResetAllHittable()
 {
     int count = 0;
+    StringMapSnapshot snapshot = g_smHittableResetProp.Snapshot();
 
-    for (int i = 0; i < g_hTankPropsHitList.Length; i++)
+    for (int i = 0; i < snapshot.Length; i++)
     {
-        int oldRef = g_hTankPropsHitList.Get(i);
         char refKey[32];
-        IntToString(oldRef, refKey, sizeof(refKey));
+        snapshot.GetKey(i, refKey, sizeof(refKey));
+
+        int oldRef = StringToInt(refKey);
+        if (g_hTankPropsHitList.FindValue(oldRef) == -1)
+            continue;
 
         HittableResetProp prop;
         if (!g_smHittableResetProp.GetArray(refKey, prop, sizeof(prop)))
             continue;
 
         int entity = EntRefToEntIndex(oldRef);
-        if (entity == INVALID_ENT_REFERENCE || !IsValidEntity(entity))
-        {
-            entity = RecreateHittable(prop);
-            if (entity == -1)
-                continue;
-        }
+        if (entity != INVALID_ENT_REFERENCE && IsValidEntity(entity))
+            AcceptEntityInput(entity, "Kill");
 
-        RestoreHittableState(entity, prop);
+        int newEntity = RecreateHittable(prop);
+        if (newEntity == -1)
+            continue;
 
-        int newRef = EntIndexToEntRef(entity);
-        if (newRef != oldRef)
-        {
-            g_hTankPropsHitList.Set(i, newRef);
+        RestoreHittableState(newEntity, prop);
 
-            char newRefKey[32];
-            IntToString(newRef, newRefKey, sizeof(newRefKey));
-            g_smHittableResetProp.SetArray(newRefKey, prop, sizeof(prop), true);
-            RequestFrame(OnNextFrame_SaveHittable, newRef);
-        }
+        int newRef = EntIndexToEntRef(newEntity);
+        char newRefKey[32];
+        IntToString(newRef, newRefKey, sizeof(newRefKey));
+        g_smHittableResetProp.Remove(refKey);
+        g_smHittableResetProp.SetArray(newRefKey, prop, sizeof(prop), true);
+        RequestFrame(OnNextFrame_SaveHittable, newRef);
 
         count++;
     }
 
+    delete snapshot;
     g_hTankPropsHitList.Clear();
     return count;
 }
@@ -364,9 +389,18 @@ int RecreateHittable(const HittableResetProp prop)
         if (prop.modelName[0] != '\0')
             DispatchKeyValue(entity, "model", prop.modelName);
 
-        char spawnFlags[32];
-        IntToString(prop.spawnFlags, spawnFlags, sizeof(spawnFlags));
-        DispatchKeyValue(entity, "spawnflags", spawnFlags);
+        DispatchKeyValueInt(entity, "spawnflags", prop.spawnFlags);
+        if (prop.targetName[0] != '\0')
+            DispatchKeyValue(entity, "targetname", prop.targetName);
+        if (prop.parentName[0] != '\0')
+            DispatchKeyValue(entity, "parentname", prop.parentName);
+        if (prop.hammerId != 0)
+            DispatchKeyValueInt(entity, "hammerid", prop.hammerId);
+        if (prop.fadeMinDist != 0.0)
+            DispatchKeyValueFloat(entity, "fademindist", prop.fadeMinDist);
+        if (prop.fadeMaxDist != 0.0)
+            DispatchKeyValueFloat(entity, "fademaxdist", prop.fadeMaxDist);
+
         DispatchSpawn(entity);
         ActivateEntity(entity);
     }
@@ -376,24 +410,21 @@ int RecreateHittable(const HittableResetProp prop)
 
 void RestoreHittableState(int entity, const HittableResetProp prop)
 {
-    TeleportEntity(entity, prop.origin, prop.angles, NULL_VECTOR);
+    if (prop.modelName[0] != '\0')
+        SetEntityModel(entity, prop.modelName);
 
-    if (HasEntProp(entity, Prop_Send, "m_hasTankGlow"))
-        SetEntProp(entity, Prop_Send, "m_hasTankGlow", 1, 1);
-    if (HasEntProp(entity, Prop_Data, "m_spawnflags"))
-        SetEntProp(entity, Prop_Data, "m_spawnflags", prop.spawnFlags);
+    SetEntPropIntAny(entity, "m_spawnflags", prop.spawnFlags);
+    if (prop.targetName[0] != '\0')
+        SetEntPropStringAny(entity, "m_iName", prop.targetName);
+    SetEntPropIntAny(entity, "m_iHammerID", prop.hammerId);
+
     if (HasEntProp(entity, Prop_Send, "m_clrRender"))
-        SetEntProp(entity, Prop_Send, "m_clrRender", prop.renderColor);
-    if (HasEntProp(entity, Prop_Data, "m_fadeMinDist"))
-        SetEntPropFloat(entity, Prop_Data, "m_fadeMinDist", prop.fadeMinDist);
-    if (HasEntProp(entity, Prop_Data, "m_fadeMaxDist"))
-        SetEntPropFloat(entity, Prop_Data, "m_fadeMaxDist", prop.fadeMaxDist);
-    if (HasEntProp(entity, Prop_Data, "m_iHammerID"))
-        SetEntProp(entity, Prop_Data, "m_iHammerID", prop.hammerId);
-    if (prop.targetName[0] != '\0' && HasEntProp(entity, Prop_Data, "m_iName"))
-        SetEntPropString(entity, Prop_Data, "m_iName", prop.targetName);
+        SetEntProp(entity, Prop_Send, "m_clrRender", PackRenderColor(prop));
 
-    SetEntityMoveType(entity, MOVETYPE_VPHYSICS);
+    SetEntPropFloatAny(entity, "m_fadeMinDist", prop.fadeMinDist);
+    SetEntPropFloatAny(entity, "m_fadeMaxDist", prop.fadeMaxDist);
+
+    TeleportEntity(entity, prop.origin, prop.angles, NULL_VECTOR);
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -411,25 +442,7 @@ public void OnNextFrame_SaveHittable(any entityRef)
     SDKHook(entity, SDKHook_OnTakeDamage, HittableOnTakeDamage);
 
     HittableResetProp prop;
-    GetEdictClassname(entity, prop.className, sizeof(prop.className));
-    GetEntPropString(entity, Prop_Data, "m_ModelName", prop.modelName, sizeof(prop.modelName));
-    GetEntPropVector(entity, Prop_Send, "m_vecOrigin", prop.origin);
-    GetEntPropVector(entity, Prop_Send, "m_angRotation", prop.angles);
-
-    prop.isForklift = IsForkliftModel(prop.modelName);
-
-    if (HasEntProp(entity, Prop_Data, "m_spawnflags"))
-        prop.spawnFlags = GetEntProp(entity, Prop_Data, "m_spawnflags");
-    if (HasEntProp(entity, Prop_Send, "m_clrRender"))
-        prop.renderColor = GetEntProp(entity, Prop_Send, "m_clrRender");
-    if (HasEntProp(entity, Prop_Data, "m_fadeMinDist"))
-        prop.fadeMinDist = GetEntPropFloat(entity, Prop_Data, "m_fadeMinDist");
-    if (HasEntProp(entity, Prop_Data, "m_fadeMaxDist"))
-        prop.fadeMaxDist = GetEntPropFloat(entity, Prop_Data, "m_fadeMaxDist");
-    if (HasEntProp(entity, Prop_Data, "m_iHammerID"))
-        prop.hammerId = GetEntProp(entity, Prop_Data, "m_iHammerID");
-    if (HasEntProp(entity, Prop_Data, "m_iName"))
-        GetEntPropString(entity, Prop_Data, "m_iName", prop.targetName, sizeof(prop.targetName));
+    CaptureHittableState(entity, prop);
 
     char refKey[32];
     IntToString(entityRef, refKey, sizeof(refKey));
@@ -444,11 +457,156 @@ public Action HittableOnTakeDamage(int victim, int &attacker, int &inflictor, fl
     if (!IsValidAliveTank(attacker) && !IsValidAliveTank(inflictor))
         return Plugin_Continue;
 
-    int entityRef = EntIndexToEntRef(victim);
-    if (g_hTankPropsHitList.FindValue(entityRef) == -1)
-        g_hTankPropsHitList.Push(entityRef);
+    g_iTankHitGameTick = GetGameTickCount();
+    RequestFrame(Frame_RecordTankHitHittable, EntIndexToEntRef(victim));
 
     return Plugin_Continue;
+}
+
+public void Frame_RecordTankHitHittable(any entityRef)
+{
+    int entity = EntRefToEntIndex(entityRef);
+    if (entity == INVALID_ENT_REFERENCE || !IsValidEntity(entity) || !IsTankPropEntity(entity))
+        return;
+
+    if (GetGameTickCount() != g_iTankHitGameTick + 1)
+        return;
+
+    if (g_hTankPropsHitList.FindValue(entityRef) == -1)
+        g_hTankPropsHitList.Push(entityRef);
+}
+
+void CaptureHittableState(int entity, HittableResetProp prop)
+{
+    GetEdictClassname(entity, prop.className, sizeof(prop.className));
+    GetEntPropString(entity, Prop_Data, "m_ModelName", prop.modelName, sizeof(prop.modelName));
+    GetEntPropVector(entity, Prop_Send, "m_vecOrigin", prop.origin);
+    GetEntPropVector(entity, Prop_Send, "m_angRotation", prop.angles);
+
+    GetEntPropVectorAny(entity, "m_vecVelocity", prop.velocity);
+    GetEntPropVectorAny(entity, "m_vecAngVelocity", prop.angularVelocity);
+    GetEntPropVectorAny(entity, "m_vecMins", prop.mins);
+    GetEntPropVectorAny(entity, "m_vecMaxs", prop.maxs);
+
+    prop.spawnFlags = GetEntPropIntAny(entity, "m_spawnflags");
+    CaptureRenderColor(entity, prop);
+    prop.renderMode = GetEntPropIntAny(entity, "m_nRenderMode");
+    prop.renderFx = GetEntPropIntAny(entity, "m_nRenderFX");
+    prop.effects = GetEntPropIntAny(entity, "m_fEffects");
+    prop.skin = GetEntPropIntAny(entity, "m_nSkin");
+    prop.body = GetEntPropIntAny(entity, "m_nBody");
+    prop.sequence = GetEntPropIntAny(entity, "m_nSequence");
+    prop.collisionGroup = GetEntPropIntAny(entity, "m_CollisionGroup");
+    prop.solidType = GetEntPropIntAny(entity, "m_nSolidType");
+    prop.solidFlags = GetEntPropIntAny(entity, "m_usSolidFlags");
+    prop.moveType = view_as<int>(GetEntityMoveType(entity));
+    prop.health = GetEntPropIntAny(entity, "m_iHealth");
+    prop.gravity = GetEntPropFloatAny(entity, "m_flGravity");
+    prop.mass = GetEntPropFloatAny(entity, "m_mass");
+    prop.friction = GetEntPropFloatAny(entity, "m_flFriction");
+    prop.elasticity = GetEntPropFloatAny(entity, "m_flElasticity");
+    prop.damageScale = GetEntPropFloatAny(entity, "m_flPhysicsDamageScale");
+    prop.fadeMinDist = GetEntPropFloatAny(entity, "m_fadeMinDist");
+    prop.fadeMaxDist = GetEntPropFloatAny(entity, "m_fadeMaxDist");
+    prop.hammerId = GetEntPropIntAny(entity, "m_iHammerID");
+    prop.hasTankGlow = HasEntProp(entity, Prop_Send, "m_hasTankGlow") && GetEntProp(entity, Prop_Send, "m_hasTankGlow", 1) == 1;
+    prop.isForklift = IsForkliftModel(prop.modelName);
+
+    GetEntPropStringAny(entity, "m_iName", prop.targetName, sizeof(prop.targetName));
+    prop.parentName[0] = '\0';
+}
+
+void CaptureRenderColor(int entity, HittableResetProp prop)
+{
+    int rgba = HasEntProp(entity, Prop_Send, "m_clrRender") ? GetEntProp(entity, Prop_Send, "m_clrRender") : 0xFFFFFFFF;
+    prop.renderColor[0] = (rgba >> 16) & 0xFF;
+    prop.renderColor[1] = (rgba >> 8) & 0xFF;
+    prop.renderColor[2] = rgba & 0xFF;
+    prop.renderColor[3] = (rgba >> 24) & 0xFF;
+}
+
+int PackRenderColor(const HittableResetProp prop)
+{
+    return ((prop.renderColor[3] & 0xFF) << 24)
+        | ((prop.renderColor[0] & 0xFF) << 16)
+        | ((prop.renderColor[1] & 0xFF) << 8)
+        | (prop.renderColor[2] & 0xFF);
+}
+
+int GetEntPropIntAny(int entity, const char[] propName, int defaultValue = 0)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        return GetEntProp(entity, Prop_Send, propName);
+    if (HasEntProp(entity, Prop_Data, propName))
+        return GetEntProp(entity, Prop_Data, propName);
+    return defaultValue;
+}
+
+float GetEntPropFloatAny(int entity, const char[] propName, float defaultValue = 0.0)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        return GetEntPropFloat(entity, Prop_Send, propName);
+    if (HasEntProp(entity, Prop_Data, propName))
+        return GetEntPropFloat(entity, Prop_Data, propName);
+    return defaultValue;
+}
+
+bool GetEntPropVectorAny(int entity, const char[] propName, float value[3])
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+    {
+        GetEntPropVector(entity, Prop_Send, propName, value);
+        return true;
+    }
+    if (HasEntProp(entity, Prop_Data, propName))
+    {
+        GetEntPropVector(entity, Prop_Data, propName, value);
+        return true;
+    }
+    value[0] = 0.0;
+    value[1] = 0.0;
+    value[2] = 0.0;
+    return false;
+}
+
+bool GetEntPropStringAny(int entity, const char[] propName, char[] value, int maxlen)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+    {
+        GetEntPropString(entity, Prop_Send, propName, value, maxlen);
+        return true;
+    }
+    if (HasEntProp(entity, Prop_Data, propName))
+    {
+        GetEntPropString(entity, Prop_Data, propName, value, maxlen);
+        return true;
+    }
+    value[0] = '\0';
+    return false;
+}
+
+void SetEntPropIntAny(int entity, const char[] propName, int value)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        SetEntProp(entity, Prop_Send, propName, value);
+    if (HasEntProp(entity, Prop_Data, propName))
+        SetEntProp(entity, Prop_Data, propName, value);
+}
+
+void SetEntPropFloatAny(int entity, const char[] propName, float value)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        SetEntPropFloat(entity, Prop_Send, propName, value);
+    if (HasEntProp(entity, Prop_Data, propName))
+        SetEntPropFloat(entity, Prop_Data, propName, value);
+}
+
+void SetEntPropStringAny(int entity, const char[] propName, const char[] value)
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        SetEntPropString(entity, Prop_Send, propName, value);
+    if (HasEntProp(entity, Prop_Data, propName))
+        SetEntPropString(entity, Prop_Data, propName, value);
 }
 
 bool IsTrackedHittableClass(const char[] classname)
@@ -691,7 +849,7 @@ public Action Command_TankControlLock(int client, int args)
 
     bool enabled = !g_cvLockTankControl.BoolValue;
     g_cvLockTankControl.SetBool(enabled);
-    CPrintToChatAll("%t", enabled ? "Tank Lock Enabled" : "Tank Lock Disabled");
+    CPrintToChatAll("%t", enabled ? "Tank Lock Enabled" : "Tank Lock Disabled", client);
     return Plugin_Handled;
 }
 
@@ -741,17 +899,13 @@ public Action Command_ForkliftResetPos(int client, int args)
     return Plugin_Handled;
 }
 
-int GetRealPlayerCount()
+public Action Command_HittableInfo(int client, int args)
 {
-    int count = 0;
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (IsValidClient(i) && !IsFakeClient(i))
-        {
-            count++;
-        }
-    }
-    return count;
+    if (!IsValidClient(client))
+        return Plugin_Handled;
+
+    ShowHittableInfoMenu(client);
+    return Plugin_Handled;
 }
 
 // ==================== Menu system ====================
@@ -813,6 +967,10 @@ void ShowTankMenu(int client)
     char teleportItem[64];
     Format(teleportItem, sizeof(teleportItem), "%T%s", "Menu Teleport Survivor", client, disabled ? disabledSuffix : "");
     menu.AddItem("tpsurvivor", teleportItem, disabled ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+
+    char infoItem[64];
+    Format(infoItem, sizeof(infoItem), "%T", "Menu Hittable Info", client);
+    menu.AddItem("hittableinfo", infoItem);
     
     char statusItem[64];
     char status[64];
@@ -827,10 +985,12 @@ void ShowTankMenu(int client)
 public Action Timer_DoReset(Handle timer, any userid)
 {
     int client = GetClientOfUserId(userid);
-    // Perform reset logic on next tick to avoid interfering with menu lifecycle.
-    ResetAllIronProps();
-    CPrintToChatAll("%t", "Reset All Hittables", client);
-    CPrintToChat(client, "%t", "Reset Hittables Count", g_IronCount);
+    int resetCount = ResetAllIronProps();
+    CPrintToChatAll("%t", "Reset All Hittables", resetCount);
+
+    if (IsValidClient(client))
+        CPrintToChat(client, "%t", "Reset Hittables Count", g_IronCount);
+
     return Plugin_Stop;
 }
 
@@ -874,11 +1034,8 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                     return 0;
                 }
 
-                // Delete current menu instance and schedule reset + reopen via timers.
                 delete menu;
-                // Small delay to let the command handler finish, then perform reset.
                 CreateTimer(0.01, Timer_DoReset, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
-                // Reopen menu after entities settle (longer delay).
                 CreateTimer(0.5, Timer_ReopenTankMenu, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
                 return 0;
             }
@@ -919,6 +1076,11 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 
                 ShowSurvivorTeleportMenu(param1);
             }
+            else if (StrEqual(info, "hittableinfo"))
+            {
+                ShowHittableInfoMenu(param1);
+                RedisplayTankMenu(param1);
+            }
             else if (StrEqual(info, "lockcontrol"))
             {
                 if (g_cvDisablePlugin.BoolValue)
@@ -939,6 +1101,67 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
         case MenuAction_End: delete menu;
     }
     return 0;
+}
+
+void ShowHittableInfoMenu(int client)
+{
+    PrintAimHittableInfo(client);
+}
+
+void PrintAimHittableInfo(int client)
+{
+    int entity = GetClientAimEntity(client);
+    if (entity <= MaxClients || !IsValidEntity(entity))
+    {
+        CPrintToChat(client, "%t", "No Cursor Position");
+        return;
+    }
+
+    char className[64];
+    GetEdictClassname(entity, className, sizeof(className));
+    if (!IsTankPropEntity(entity))
+    {
+        CPrintToChat(client, "%t", "Aim Entity Not Hittable", entity, className);
+        return;
+    }
+
+    int ref = EntIndexToEntRef(entity);
+    char refKey[32];
+    IntToString(ref, refKey, sizeof(refKey));
+
+    HittableResetProp prop;
+    bool recorded = g_smHittableResetProp.GetArray(refKey, prop, sizeof(prop));
+    if (!recorded)
+        CaptureHittableState(entity, prop);
+
+    bool hitQueued = g_hTankPropsHitList.FindValue(ref) != -1;
+    CPrintToChat(client, "%t", "Aim Hittable Header", entity, ref, recorded ? "yes" : "live", hitQueued ? "yes" : "no");
+    CPrintToChat(client, "%t", "Aim Hittable Model", prop.className, prop.modelName);
+    CPrintToChat(client, "%t", "Aim Hittable Transform", prop.origin[0], prop.origin[1], prop.origin[2], prop.angles[0], prop.angles[1], prop.angles[2]);
+    CPrintToChat(client, "%t", "Aim Hittable Color", prop.renderColor[0], prop.renderColor[1], prop.renderColor[2], prop.renderColor[3], prop.fadeMinDist, prop.fadeMaxDist);
+    CPrintToChat(client, "%t", "Aim Hittable Physics", prop.gravity, prop.mass, prop.friction, prop.elasticity);
+    CPrintToChat(client, "%t", "Aim Hittable Collision", prop.moveType, prop.solidType, prop.solidFlags, prop.collisionGroup);
+    CPrintToChat(client, "%t", "Aim Hittable Velocity", prop.velocity[0], prop.velocity[1], prop.velocity[2], prop.angularVelocity[0], prop.angularVelocity[1], prop.angularVelocity[2]);
+    CPrintToChat(client, "%t", "Aim Hittable Flags", prop.hasTankGlow ? "yes" : "no", prop.isForklift ? "yes" : "no", prop.spawnFlags, prop.hammerId);
+}
+
+int GetClientAimEntity(int client)
+{
+    float eyePos[3];
+    float eyeAng[3];
+    GetClientEyePosition(client, eyePos);
+    GetClientEyeAngles(client, eyeAng);
+
+    Handle trace = TR_TraceRayFilterEx(eyePos, eyeAng, MASK_SOLID, RayType_Infinite, TraceFilter_NoPlayers, client);
+    if (trace == INVALID_HANDLE)
+        return -1;
+
+    int entity = -1;
+    if (TR_DidHit(trace))
+        entity = TR_GetEntityIndex(trace);
+
+    delete trace;
+    return entity;
 }
 
 void ShowInfectedMenu(int client)
