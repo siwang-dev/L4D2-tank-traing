@@ -80,6 +80,7 @@ int g_IronCount = 0;
 ArrayList g_hTankPropsHitList;
 StringMap g_smHittableResetProp;
 bool g_bTankSpawned = false;
+bool g_bHookCreated = false;
 int g_iTankHitGameTick = 0;
 
 int g_iPendingTank[MAXPLAYERS + 1];
@@ -142,7 +143,7 @@ public void OnPluginStart()
         g_IronProps[i].isForklift = false;
     }
     
-    PrintToServer("[TankReset] %T", "Plugin Loaded", LANG_SERVER, PLUGIN_VERSION);
+    PrintToServer("[TankReset] Plugin loaded v%s", PLUGIN_VERSION);
 }
 
 public void OnMapStart()
@@ -221,7 +222,7 @@ void ScanForIronProps()
         AddIronProp(i, modelName, isForklift);
     }
     
-    PrintToServer("[TankReset] %T", "Scan Complete", LANG_SERVER, g_IronCount, CountForklifts());
+    PrintToServer("[TankReset] Scan complete: found %d hittables, %d forklifts", g_IronCount, CountForklifts());
 }
 
 bool IsForkliftModel(const char[] modelName)
@@ -324,7 +325,7 @@ void ClearIronData()
 int ResetAllIronProps()
 {
     int resetCount = ResetAllHittable();
-    PrintToServer("[TankReset] %T", "Reset Hittables Log", LANG_SERVER, resetCount);
+    PrintToServer("[TankReset] Reset %d Tank-hit hittables", resetCount);
     EmitSoundToAll("buttons/button14.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
     return resetCount;
 }
@@ -332,26 +333,36 @@ int ResetAllIronProps()
 int ResetAllHittable()
 {
     int count = 0;
-    StringMapSnapshot snapshot = g_smHittableResetProp.Snapshot();
+    int length = g_hTankPropsHitList.Length;
 
-    for (int i = 0; i < snapshot.Length; i++)
+    for (int i = 0; i < length; i++)
     {
+        int oldRef = g_hTankPropsHitList.Get(i);
         char refKey[32];
-        snapshot.GetKey(i, refKey, sizeof(refKey));
-
-        int oldRef = StringToInt(refKey);
-        if (g_hTankPropsHitList.FindValue(oldRef) == -1)
-            continue;
+        IntToString(oldRef, refKey, sizeof(refKey));
 
         HittableResetProp prop;
         if (!g_smHittableResetProp.GetArray(refKey, prop, sizeof(prop)))
+        {
+            int missingRecordEntity = EntRefToEntIndex(oldRef);
+            if (missingRecordEntity != INVALID_ENT_REFERENCE && IsValidEntity(missingRecordEntity))
+                AcceptEntityInput(missingRecordEntity, "Kill");
             continue;
+        }
 
         int entity = EntRefToEntIndex(oldRef);
         if (entity != INVALID_ENT_REFERENCE && IsValidEntity(entity))
-            AcceptEntityInput(entity, "Kill");
+        {
+            RestoreHittableState(entity, prop);
+            count++;
+            continue;
+        }
 
+        g_smHittableResetProp.Remove(refKey);
+
+        g_bHookCreated = true;
         int newEntity = RecreateHittable(prop);
+        g_bHookCreated = false;
         if (newEntity == -1)
             continue;
 
@@ -360,15 +371,14 @@ int ResetAllHittable()
         int newRef = EntIndexToEntRef(newEntity);
         char newRefKey[32];
         IntToString(newRef, newRefKey, sizeof(newRefKey));
-        g_smHittableResetProp.Remove(refKey);
         g_smHittableResetProp.SetArray(newRefKey, prop, sizeof(prop), true);
+        if (g_hTankPropsHitList.FindValue(newRef) == -1)
+            g_hTankPropsHitList.Push(newRef);
         RequestFrame(OnNextFrame_SaveHittable, newRef);
 
         count++;
     }
 
-    delete snapshot;
-    g_hTankPropsHitList.Clear();
     return count;
 }
 
@@ -414,12 +424,39 @@ void RestoreHittableState(int entity, const HittableResetProp prop)
         SetEntityModel(entity, prop.modelName);
 
     SetEntPropIntAny(entity, "m_spawnflags", prop.spawnFlags);
+
+    SetEntPropIntAny(entity, "m_nRenderMode", prop.renderMode);
+    SetEntPropIntAny(entity, "m_nRenderFX", prop.renderFx);
+    SetEntPropIntAny(entity, "m_fEffects", prop.effects);
+
+    SetEntPropIntAny(entity, "m_nSkin", prop.skin);
+    SetEntPropIntAny(entity, "m_nBody", prop.body);
+    SetEntPropIntAny(entity, "m_nSequence", prop.sequence);
+
+    SetEntPropIntAny(entity, "m_CollisionGroup", prop.collisionGroup);
+    SetEntPropIntAny(entity, "m_nSolidType", prop.solidType);
+    SetEntPropIntAny(entity, "m_usSolidFlags", prop.solidFlags);
+
+    SetEntityMoveType(entity, view_as<MoveType>(prop.moveType));
+
+    SetEntPropIntAny(entity, "m_iHealth", prop.health);
+
+    SetEntPropFloatAny(entity, "m_flGravity", prop.gravity);
+    SetEntPropFloatAny(entity, "m_mass", prop.mass);
+    SetEntPropFloatAny(entity, "m_flFriction", prop.friction);
+    SetEntPropFloatAny(entity, "m_flElasticity", prop.elasticity);
+    SetEntPropFloatAny(entity, "m_flPhysicsDamageScale", prop.damageScale);
+
     if (prop.targetName[0] != '\0')
         SetEntPropStringAny(entity, "m_iName", prop.targetName);
+
     SetEntPropIntAny(entity, "m_iHammerID", prop.hammerId);
 
     if (HasEntProp(entity, Prop_Send, "m_clrRender"))
-        SetEntProp(entity, Prop_Send, "m_clrRender", PackRenderColor(prop));
+        SetEntProp(entity, Prop_Send, "m_clrRender", PackRenderColor(prop), 4);
+
+    if (prop.hasTankGlow && HasEntProp(entity, Prop_Send, "m_hasTankGlow"))
+        SetEntProp(entity, Prop_Send, "m_hasTankGlow", 1, 1);
 
     SetEntPropFloatAny(entity, "m_fadeMinDist", prop.fadeMinDist);
     SetEntPropFloatAny(entity, "m_fadeMaxDist", prop.fadeMaxDist);
@@ -429,6 +466,9 @@ void RestoreHittableState(int entity, const HittableResetProp prop)
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+    if (g_bHookCreated)
+        return;
+
     if (IsTrackedHittableClass(classname))
         RequestFrame(OnNextFrame_SaveHittable, EntIndexToEntRef(entity));
 }
@@ -436,7 +476,17 @@ public void OnEntityCreated(int entity, const char[] classname)
 public void OnNextFrame_SaveHittable(any entityRef)
 {
     int entity = EntRefToEntIndex(entityRef);
-    if (entity == INVALID_ENT_REFERENCE || !IsValidEntity(entity) || !IsTankPropEntity(entity))
+    if (entity == INVALID_ENT_REFERENCE || !IsValidEntity(entity))
+        return;
+
+    if (g_bTankSpawned && g_iTankHitGameTick + 1 == GetGameTickCount())
+    {
+        if (g_hTankPropsHitList.FindValue(entityRef) == -1)
+            g_hTankPropsHitList.Push(entityRef);
+        return;
+    }
+
+    if (!IsTankPropEntity(entity))
         return;
 
     SDKHook(entity, SDKHook_OnTakeDamage, HittableOnTakeDamage);
@@ -518,7 +568,7 @@ void CaptureHittableState(int entity, HittableResetProp prop)
 
 void CaptureRenderColor(int entity, HittableResetProp prop)
 {
-    int rgba = HasEntProp(entity, Prop_Send, "m_clrRender") ? GetEntProp(entity, Prop_Send, "m_clrRender") : 0xFFFFFFFF;
+    int rgba = HasEntProp(entity, Prop_Send, "m_clrRender") ? GetEntProp(entity, Prop_Send, "m_clrRender", 4) : 0xFFFFFFFF;
     prop.renderColor[0] = (rgba >> 16) & 0xFF;
     prop.renderColor[1] = (rgba >> 8) & 0xFF;
     prop.renderColor[2] = rgba & 0xFF;
@@ -654,7 +704,7 @@ void PrecacheForkliftAssets()
     if (!IsModelPrecached(FORKLIFT_MODEL))
     {
         PrecacheModel(FORKLIFT_MODEL, true);
-        PrintToServer("[TankReset] %T", "Precached Forklift", LANG_SERVER, FORKLIFT_MODEL);
+        PrintToServer("[TankReset] Precached forklift model: %s", FORKLIFT_MODEL);
     }
 }
 
@@ -664,7 +714,7 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     int prop = CreateEntityByName("prop_physics_override");
     if (prop == -1)
     {
-        PrintToServer("[TankReset] %T", "Create Physics Error", LANG_SERVER);
+        PrintToServer("[TankReset] Failed to create prop_physics_override");
         return -1;
     }
 
@@ -694,7 +744,7 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     SetEntProp(prop, Prop_Data, "m_CollisionGroup", 0);
     SetEntityMoveType(prop, MOVETYPE_VPHYSICS);
     
-    PrintToServer("[TankReset] %T", "Spawned Forklift", LANG_SERVER, actualModel, prop);
+    PrintToServer("[TankReset] Spawned physical forklift: %s (entity: %d)", actualModel, prop);
     return prop;
 }
 
@@ -1030,13 +1080,13 @@ public int TankMenuHandler(Menu menu, MenuAction action, int param1, int param2)
                 {
                     PrintFeatureDisabled(param1);
                     RedisplayTankMenu(param1);
-                    delete menu;
                     return 0;
                 }
 
-                delete menu;
-                CreateTimer(0.01, Timer_DoReset, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
-                CreateTimer(0.5, Timer_ReopenTankMenu, GetClientUserId(param1), TIMER_FLAG_NO_MAPCHANGE);
+                int resetCount = ResetAllIronProps();
+                CPrintToChatAll("%t", "Reset All Hittables", resetCount);
+                CPrintToChat(param1, "%t", "Reset Hittables Count", g_IronCount);
+                RedisplayTankMenu(param1);
                 return 0;
             }
             else if (StrEqual(info, "become"))
