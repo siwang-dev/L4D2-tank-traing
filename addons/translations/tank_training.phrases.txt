@@ -2,38 +2,38 @@
 {
 	"Plugin Disabled Menu Available"
 	{
-		"en"	"[Tank-training] Plugin is currently disabled, but the menu is still available."
-		"chi"	"[Tank-training] 插件当前已禁用，但菜单仍可打开。"
+		"en"	"{red}[Tank-training]{default} Plugin is currently disabled, but the menu is still available."
+		"chi"	"{red}[Tank-training]{default} 插件当前已禁用，但菜单仍可打开。"
 	}
 	"Plugin Disabled"
 	{
-		"en"	"[Tank-training] Plugin is currently disabled."
-		"chi"	"[Tank-training] 插件当前已禁用。"
+		"en"	"{red}[Tank-training]{default} Plugin is currently disabled."
+		"chi"	"{red}[Tank-training]{default} 插件当前已禁用。"
 	}
 	"Mode Not Supported"
 	{
-		"en"	"[Tank-training] Only supported in Campaign/Versus modes."
-		"chi"	"[Tank-training] 仅支持战役/对抗模式。"
+		"en"	"{red}[Tank-training]{default} Only supported in Campaign/Versus modes."
+		"chi"	"{red}[Tank-training]{default} 仅支持战役/对抗模式。"
 	}
 	"Need Alive"
 	{
-		"en"	"[Tank-training] You need to respawn first."
-		"chi"	"[Tank-training] 你需要先复活。"
+		"en"	"{red}[Tank-training]{default} You need to respawn first."
+		"chi"	"{red}[Tank-training]{default} 你需要先复活。"
 	}
 	"Already Tank"
 	{
-		"en"	"[Tank-training] You are already a Tank."
-		"chi"	"[Tank-training] 你已经是 Tank 了。"
+		"en"	"{red}[Tank-training]{default} You are already a Tank."
+		"chi"	"{red}[Tank-training]{default} 你已经是 Tank 了。"
 	}
 	"Invalid Class"
 	{
-		"en"	"[Tank-training] Valid inf: tank hunter jockey smoker charger boomer spitter"
-		"chi"	"[Tan-trainingk] 可选特感: tank hunter jockey smoker charger boomer spitter"
+		"en"	"{red}[Tank-training]{default} Valid inf: {yellow}tank hunter jockey smoker charger boomer spitter{default}"
+		"chi"	"{red}[Tank-training]{default} 可选特感: {yellow}tank hunter jockey smoker charger boomer spitter{default}"
 	}
 	"Become Failed"
 	{
-		"en"	"[Tank-training] Failed to become infected, please try again."
-		"chi"	"[Tank-training] 变成感染者失败，请重试。"
+		"en"	"{red}[Tank-training]{default} Failed to become infected, please try again."
+		"chi"	"{red}[Tank-training]{default} 变成感染者失败，请重试。"
 	}
 	"Became Infected All"
 	{
@@ -52,133 +52,133 @@
 	}
 	"Tank Menu Disabled Title"
 	{
-		"en"	"=== Tank Control Menu [PLUGIN DISABLED] ===\nAll functions unavailable"
-		"chi"	"=== Tank 控制菜单 [插件已禁用] ===\n所有功能不可用"
+		"en"	"{red}=== Tank Control Menu [PLUGIN DISABLED] ==={default}\n{yellow}All functions unavailable{default}"
+		"chi"	"{red}=== Tank 控制菜单 [插件已禁用] ==={default}\n{yellow}所有功能不可用{default}"
 	}
 	"Tank Menu Title"
 	{
-		"en"	"=== Tank Control Menu ==="
-		"chi"	"=== Tank 控制菜单 ==="
+		"en"	"{green}=== Tank Control Menu ==={default}"
+		"chi"	"{green}=== Tank 控制菜单 ==={default}"
 	}
 	"Disabled Suffix"
 	{
-		"en"	" [DISABLED]"
-		"chi"	" [已禁用]"
+		"en"	" {red}[DISABLED]{default}"
+		"chi"	" {red}[已禁用]{default}"
 	}
 	"Menu Force Start"
 	{
-		"en"	"Force Start Game"
-		"chi"	"强制开始游戏"
+		"en"	"{yellow}Force Start Game{default}"
+		"chi"	"{yellow}强制开始游戏{default}"
 	}
 	"Menu Reset Hittables"
 	{
-		"en"	"Reset Hittables"
-		"chi"	"重置铁"
+		"en"	"{yellow}Reset Hittables{default}"
+		"chi"	"{yellow}重置铁{default}"
 	}
 	"Menu Become Infected"
 	{
-		"en"	"Choose Infected Class"
-		"chi"	"选择感染者"
+		"en"	"{yellow}Choose Infected Class{default}"
+		"chi"	"{yellow}选择感染者{default}"
 	}
 	"Menu Noclip"
 	{
-		"en"	"Toggle Noclip (!tnoclip)"
-		"chi"	"切换穿墙模式 (!tnoclip)"
+		"en"	"{yellow}Toggle Noclip (!tnoclip){default}"
+		"chi"	"{yellow}切换穿墙模式 (!tnoclip){default}"
 	}
 	"Menu Lock Control"
 	{
-		"en"	"Tank Control Lock: %s"
-		"chi"	"Tank 控制权锁定: %s"
+		"en"	"{green}Tank Control Lock: {yellow}%s{default}"
+		"chi"	"{green}Tank 控制权锁定: {yellow}%s{default}"
 	}
 	"Menu Teleport Survivor"
 	{
-		"en"	"Teleport Survivors To Cursor"
-		"chi"	"传送生还者到准星"
+		"en"	"{yellow}Teleport Survivors To Cursor{default}"
+		"chi"	"{yellow}传送生还者到准星{default}"
 	}
 	"Menu Hittable Info"
 	{
-		"en"	"Print Aim Hittable Info"
-		"chi"	"打印准星铁信息"
+		"en"	"{yellow}Print Aim Hittable Info{default}"
+		"chi"	"{yellow}打印准星铁信息{default}"
 	}
 	"Menu Status"
 	{
-		"en"	"Current Status: %s"
-		"chi"	"当前状态: %s"
+		"en"	"Current Status: {green}%s{default}"
+		"chi"	"当前状态: {green}%s{default}"
 	}
 	"State On"
 	{
-		"en"	"ON"
-		"chi"	"开启"
+		"en"	"{green}ON{default}"
+		"chi"	"{green}开启{default}"
 	}
 	"State Off"
 	{
-		"en"	"OFF"
-		"chi"	"关闭"
+		"en"	"{red}OFF{default}"
+		"chi"	"{red}关闭{default}"
 	}
 	"Status Disabled"
 	{
-		"en"	"Plugin Disabled"
-		"chi"	"插件已禁用"
+		"en"	"{red}Plugin Disabled{default}"
+		"chi"	"{red}插件已禁用{default}"
 	}
 	"Status Enabled"
 	{
-		"en"	"Plugin Running Normally"
-		"chi"	"插件正常运行"
+		"en"	"{green}Plugin Running Normally{default}"
+		"chi"	"{green}插件正常运行{default}"
 	}
 	"Infected Menu Title"
 	{
-		"en"	"Choose Infected Class"
-		"chi"	"选择要变成的感染者"
+		"en"	"{yellow}Choose Infected Class{default}"
+		"chi"	"{yellow}选择要变成的感染者{default}"
 	}
 	"Tank Spawn Menu Title"
 	{
-		"en"	"Choose Tank Spawn Position"
-		"chi"	"选择 Tank 生成位置"
+		"en"	"{yellow}Choose Tank Spawn Position{default}"
+		"chi"	"{yellow}选择 Tank 生成位置{default}"
 	}
 	"Tank Spawn Soul"
 	{
-		"en"	"Spawn At Ghost Position"
-		"chi"	"在灵魂位置生成"
+		"en"	"{yellow}Spawn At Ghost Position{default}"
+		"chi"	"{yellow}在灵魂位置生成{default}"
 	}
 	"Tank Spawn Flow"
 	{
-		"en"	"Spawn Tank By Flow"
-		"chi"	"按路程生成 Tank"
+		"en"	"{yellow}Spawn Tank By Flow{default}"
+		"chi"	"{yellow}按路程生成 Tank{default}"
 	}
 	"Tank Spawn Flow Percent"
 	{
-		"en"	"Spawn Tank By Flow (%d%%)"
-		"chi"	"按路程生成 Tank (%d%%)"
+		"en"	"{yellow}Spawn Tank By Flow ({green}%d%%{default})"
+		"chi"	"{yellow}按路程生成 Tank ({green}%d%%{default})"
 	}
 	"All Survivors"
 	{
-		"en"	"All Survivors"
-		"chi"	"所有生还者"
+		"en"	"{green}All Survivors{default}"
+		"chi"	"{green}所有生还者{default}"
 	}
 	"Survivor Teleport Menu Title"
 	{
-		"en"	"=== Teleport Survivors ==="
-		"chi"	"=== 传送生还者 ==="
+		"en"	"{yellow}=== Teleport Survivors ==={default}"
+		"chi"	"{yellow}=== 传送生还者 ==={default}"
 	}
 	"No Survivors Available"
 	{
-		"en"	"No survivors available"
-		"chi"	"没有可用的生还者"
+		"en"	"{red}No survivors available{default}"
+		"chi"	"{red}没有可用的生还者{default}"
 	}
 	"Reset All Hittables"
 	{
-		"en"	"[Tank-training] Reset %d Tank-hit hittables"
-		"chi"	"[Tank-training] 已重置 %d 个铁"
+		"en"	"{red}[Tank-training]{default} Reset {green}%d{default} Tank-hit hittables"
+		"chi"	"{red}[Tank-training]{default} 已重置 {green}%d{default} 个铁"
 	}
 	"Reset Hittables Count"
 	{
-		"en"	"[Tank-training] Total hittables on map: %d"
-		"chi"	"[Tank-training] 地图中的铁总数: %d"
+		"en"	"{red}[Tank-training]{default} Total hittables on map: {green}%d{default}"
+		"chi"	"{red}[Tank-training]{default} 地图中的铁总数: {green}%d{default}"
 	}
 	"Forklift Info Printed"
 	{
-		"en"	"[Tank-training] Found %d forklifts (check server console for details)"
-		"chi"	"[Tank-training] 找到 %d 个叉车，详情请查看服务器控制台。"
+		"en"	"{red}[Tank-training]{default} Found {green}%d{default} forklifts (check server console for details)"
+		"chi"	"{red}[Tank-training]{default} 找到 {green}%d{default} 个叉车，详情请查看服务器控制台。"
 	}
 	"Forklift Reset"
 	{
@@ -192,8 +192,8 @@
 	}
 	"Noclip Enabled"
 	{
-		"en"	"{red}[Tank-training]{default} Noclip enabled."
-		"chi"	"{red}[Tank-training]{default} 穿墙模式已开启。"
+		"en"	"{green}[Tank-training]{default} Noclip enabled."
+		"chi"	"{green}[Tank-training]{default} 穿墙模式已开启。"
 	}
 	"Noclip Disabled"
 	{
@@ -242,8 +242,8 @@
 	}
 	"Aim Hittable Header"
 	{
-		"en"	"{red}[Tank-training]{default} ent:{green}%d{default} ref:{green}%d{default} recorded:%s hitQueue:%s"
-		"chi"	"{red}[Tank-training]{default} 实体:{green}%d{default} 引用:{green}%d{default} 已记录:%s 重置队列:%s"
+		"en"	"{red}[Tank-training]{default} ent:{green}%d{default} ref:{green}%d{default} recorded:{yellow}%s{default} hitQueue:{yellow}%s{default}"
+		"chi"	"{red}[Tank-training]{default} 实体:{green}%d{default} 引用:{green}%d{default} 已记录:{yellow}%s{default} 重置队列:{yellow}%s{default}"
 	}
 	"Aim Hittable Model"
 	{
