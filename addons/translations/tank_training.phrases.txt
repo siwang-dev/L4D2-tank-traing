@@ -168,7 +168,7 @@
 	"Reset All Hittables"
 	{
 		"en"	"[Tank-training] Reset %d Tank-hit hittables"
-		"chi"	"[Tank-training] 已重置 %d 个 Tank 击中过的铁"
+		"chi"	"[Tank-training] 已重置 %d 个铁"
 	}
 	"Reset Hittables Count"
 	{
