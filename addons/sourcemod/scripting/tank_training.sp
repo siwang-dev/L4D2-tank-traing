@@ -13,6 +13,8 @@
 #define MAX_IRON_PROPS 2048
 // Forklift model path.
 #define FORKLIFT_MODEL "models/props/cs_assault/forklift.mdl"
+// Entity safe limit - don't spawn entities when index is above this
+#define ENTITY_SAFE_LIMIT 2000
 
 // Stores tracked hittable state.
 enum struct IronData {
@@ -99,9 +101,9 @@ enum TankSpawnMode
 public Plugin myinfo = 
 {
     name = "Tank Hittable Reset",
-    author = "Siwang(死亡中心最菜传说)and ai",
+    author = "Siwang(死亡中心最菜传说)",
     description = "training GOGOGO",
-    version = "2.2.2",    //
+    version = "2.2.3",    //
     url = ""
 };
 
@@ -128,7 +130,7 @@ public void OnPluginStart()
     HookEvent("player_death", Event_PlayerDeath);
     HookEvent("tank_spawn", Event_TankSpawn);
     
-    AutoExecConfig(true, "tank_reset_plugin");
+    AutoExecConfig(true, "tank_training");
     
     for (int i = 1; i <= MaxClients; i++)
     {
@@ -396,8 +398,16 @@ int RecreateHittable(const HittableResetProp prop)
         if (entity == -1)
             return -1;
 
+        // Check if entity index is safe
+        if (!CheckIfEntitySafe(entity))
+            return -1;
+
         if (prop.modelName[0] != '\0')
             DispatchKeyValue(entity, "model", prop.modelName);
+
+        // 在 DispatchSpawn 之前设置坐标和角度，确保物理正确初始化
+        DispatchKeyValueVector(entity, "origin", prop.origin);
+        DispatchKeyValueVector(entity, "angles", prop.angles);
 
         DispatchKeyValueInt(entity, "spawnflags", prop.spawnFlags);
         if (prop.targetName[0] != '\0')
@@ -410,6 +420,9 @@ int RecreateHittable(const HittableResetProp prop)
             DispatchKeyValueFloat(entity, "fademindist", prop.fadeMinDist);
         if (prop.fadeMaxDist != 0.0)
             DispatchKeyValueFloat(entity, "fademaxdist", prop.fadeMaxDist);
+
+        // Disable shadows for consistency
+        DispatchKeyValue(entity, "disableshadows", "1");
 
         DispatchSpawn(entity);
         ActivateEntity(entity);
@@ -505,7 +518,17 @@ public Action HittableOnTakeDamage(int victim, int &attacker, int &inflictor, fl
         return Plugin_Continue;
 
     if (!IsValidAliveTank(attacker) && !IsValidAliveTank(inflictor))
-        return Plugin_Continue;
+    {
+        // 连锁反应: 被Tank打到的物件再去碰撞其他物件也要追踪
+        if (inflictor > MaxClients && IsValidEntity(inflictor) && g_hTankPropsHitList.FindValue(EntIndexToEntRef(inflictor)) != -1)
+        {
+            // Chain reaction tracking - prop hit by another prop that tank hit
+        }
+        else
+        {
+            return Plugin_Continue;
+        }
+    }
 
     g_iTankHitGameTick = GetGameTickCount();
     RequestFrame(Frame_RecordTankHitHittable, EntIndexToEntRef(victim));
@@ -708,6 +731,20 @@ void PrecacheForkliftAssets()
     }
 }
 
+// Check if entity index is safe (below limit and not -1)
+bool CheckIfEntitySafe(int entity)
+{
+    if (entity == -1)
+        return false;
+
+    if (entity > ENTITY_SAFE_LIMIT)
+    {
+        RemoveEntity(entity);
+        return false;
+    }
+    return true;
+}
+
 // Spawn a physical forklift through prop_physics_override.
 int SpawnForkliftPhysics(const float position[3], const float angles[3], const char[] modelName)
 {
@@ -715,6 +752,13 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     if (prop == -1)
     {
         PrintToServer("[TankReset] Failed to create prop_physics_override");
+        return -1;
+    }
+
+    // Check if entity index is safe
+    if (!CheckIfEntitySafe(prop))
+    {
+        PrintToServer("[TankReset] Forklift entity index %d exceeds safe limit", prop);
         return -1;
     }
 
@@ -734,11 +778,12 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     DispatchKeyValue(prop, "targetname", "tankreset_forklift_physics");
     DispatchKeyValue(prop, "spawnflags", "256");
     
+    // 在 DispatchSpawn 之前设置坐标和角度，确保物理正确初始化
+    DispatchKeyValueVector(prop, "origin", position);
+    DispatchKeyValueVector(prop, "angles", angles);
+    
     // Spawn the entity.
     DispatchSpawn(prop);
-    
-    // Place it at the recorded origin.
-    TeleportEntity(prop, position, angles, NULL_VECTOR);
     
     // Restore the physics behavior expected from the original hittable.
     SetEntProp(prop, Prop_Data, "m_CollisionGroup", 0);
