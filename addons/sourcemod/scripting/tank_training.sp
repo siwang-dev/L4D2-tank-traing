@@ -3,6 +3,7 @@
 #include <sdkhooks>
 #include <left4dhooks>
 #include <multicolors>
+#include <builtinvotes>
 #undef REQUIRE_PLUGIN
 #include <l4d2_boss_percents>
 
@@ -15,6 +16,7 @@
 #define FORKLIFT_MODEL "models/props/cs_assault/forklift.mdl"
 // Entity safe limit - don't spawn entities when index is above this
 #define ENTITY_SAFE_LIMIT 2000
+#define TANK_TRAINING_ADVERT_INTERVAL 60.0
 
 // Stores tracked hittable state.
 enum struct IronData {
@@ -83,7 +85,11 @@ ArrayList g_hTankPropsHitList;
 StringMap g_smHittableResetProp;
 bool g_bTankSpawned = false;
 bool g_bHookCreated = false;
+bool g_bMapStarted = false;
 int g_iTankHitGameTick = 0;
+Handle g_hTankTrainingVote = null;
+Handle g_hTankTrainingAdvertTimer = null;
+bool g_bVoteTargetTrainingEnabled = false;
 
 int g_iPendingTank[MAXPLAYERS + 1];
 bool g_bNoClip[MAXPLAYERS + 1];
@@ -117,8 +123,10 @@ public void OnPluginStart()
     g_cvTankHealth = CreateConVar("sm_tankreset_health", "6000", "Tank health", FCVAR_NOTIFY, true, 1000.0);
     g_cvDisablePlugin = CreateConVar("sm_tankreset_disabled", "0", "Disable this plugin (1 = all features disabled)", FCVAR_NOTIFY, true, 0.0, true, 1.0);
     g_cvLockTankControl = CreateConVar("sm_tankreset_lock_control", "0", "Lock Tank control (1 = Tank frustration no longer increases)", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+    g_cvDisablePlugin.AddChangeHook(ConVarChanged_TankTrainingState);
     
     RegConsoleCmd("sm_tk", Command_TankMenu, "Open the Tank menu");
+    RegConsoleCmd("sm_votetk", Command_VoteTankTraining, "Start a vote to toggle Tank training mode");
     RegConsoleCmd("sm_btank", Command_BecomeTank, "Become an infected class");
     RegConsoleCmd("sm_tnoclip", Command_NoClip, "Toggle noclip mode");
     RegConsoleCmd("sm_tlock", Command_TankControlLock, "Toggle Tank control lock");
@@ -145,11 +153,14 @@ public void OnPluginStart()
         g_IronProps[i].isForklift = false;
     }
     
-    PrintToServer("[TankReset] Plugin loaded v%s", PLUGIN_VERSION);
+    PrintToServer("[Tank-training] Plugin loaded v%s", PLUGIN_VERSION);
 }
 
 public void OnMapStart()
 {
+    g_bMapStarted = true;
+    UpdateTankTrainingAdvertTimer();
+
     if (g_cvDisablePlugin.BoolValue)
         return;
 
@@ -161,6 +172,9 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
+    g_bMapStarted = false;
+    delete g_hTankTrainingAdvertTimer;
+    g_hTankTrainingVote = null;
     ClearHittableTracking();
     g_bTankSpawned = false;
 }
@@ -224,7 +238,7 @@ void ScanForIronProps()
         AddIronProp(i, modelName, isForklift);
     }
     
-    PrintToServer("[TankReset] Scan complete: found %d hittables, %d forklifts", g_IronCount, CountForklifts());
+    PrintToServer("[Tank-training] Scan complete: found %d hittables, %d forklifts", g_IronCount, CountForklifts());
 }
 
 bool IsForkliftModel(const char[] modelName)
@@ -251,7 +265,7 @@ void PrintForkliftInfo()
         if (!g_IronProps[i].isActive || !g_IronProps[i].isForklift)
             continue;
 
-        PrintToServer("[TankReset] Forklift #%d entity=%d model=%s pos=%.1f %.1f %.1f ang=%.1f %.1f %.1f",
+        PrintToServer("[Tank-training] Forklift #%d entity=%d model=%s pos=%.1f %.1f %.1f ang=%.1f %.1f %.1f",
             i,
             g_IronProps[i].entityIndex,
             g_IronProps[i].modelName,
@@ -278,16 +292,12 @@ bool ResetForkliftPosition(int index)
 
         g_IronProps[index].entityIndex = entity;
     }
-    else
-    {
-        TeleportEntity(entity, g_IronProps[index].originalPos, g_IronProps[index].originalAng, NULL_VECTOR);
-        SetEntityMoveType(entity, MOVETYPE_VPHYSICS);
-    }
+    TeleportHittableToOriginal(entity, g_IronProps[index].originalPos, g_IronProps[index].originalAng);
+    SetEntityMoveType(entity, MOVETYPE_VPHYSICS);
 
     if (HasEntProp(entity, Prop_Send, "m_hasTankGlow"))
         SetEntProp(entity, Prop_Send, "m_hasTankGlow", 1, 1);
 
-    RequestFrame(OnNextFrame_SaveHittable, EntIndexToEntRef(entity));
     return true;
 }
 
@@ -327,7 +337,7 @@ void ClearIronData()
 int ResetAllIronProps()
 {
     int resetCount = ResetAllHittable();
-    PrintToServer("[TankReset] Reset %d Tank-hit hittables", resetCount);
+    PrintToServer("[Tank-training] Reset %d Tank-hit hittables", resetCount);
     EmitSoundToAll("buttons/button14.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
     return resetCount;
 }
@@ -355,7 +365,7 @@ int ResetAllHittable()
         int entity = EntRefToEntIndex(oldRef);
         if (entity != INVALID_ENT_REFERENCE && IsValidEntity(entity))
         {
-            RestoreHittableState(entity, prop);
+            TeleportHittableToOriginal(entity, prop.origin, prop.angles);
             count++;
             continue;
         }
@@ -376,7 +386,6 @@ int ResetAllHittable()
         g_smHittableResetProp.SetArray(newRefKey, prop, sizeof(prop), true);
         if (g_hTankPropsHitList.FindValue(newRef) == -1)
             g_hTankPropsHitList.Push(newRef);
-        RequestFrame(OnNextFrame_SaveHittable, newRef);
 
         count++;
     }
@@ -474,7 +483,7 @@ void RestoreHittableState(int entity, const HittableResetProp prop)
     SetEntPropFloatAny(entity, "m_fadeMinDist", prop.fadeMinDist);
     SetEntPropFloatAny(entity, "m_fadeMaxDist", prop.fadeMaxDist);
 
-    TeleportEntity(entity, prop.origin, prop.angles, NULL_VECTOR);
+    TeleportHittableToOriginal(entity, prop.origin, prop.angles);
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -505,11 +514,50 @@ public void OnNextFrame_SaveHittable(any entityRef)
     SDKHook(entity, SDKHook_OnTakeDamage, HittableOnTakeDamage);
 
     HittableResetProp prop;
-    CaptureHittableState(entity, prop);
-
     char refKey[32];
     IntToString(entityRef, refKey, sizeof(refKey));
+
+    if (g_smHittableResetProp.GetArray(refKey, prop, sizeof(prop)))
+        return;
+
+    CaptureHittableState(entity, prop);
     g_smHittableResetProp.SetArray(refKey, prop, sizeof(prop), true);
+}
+
+void TeleportHittableToOriginal(int entity, const float origin[3], const float angles[3])
+{
+    // Save the original movetype and briefly disable physics to completely
+    // reset all motion — including angular velocity which TeleportEntity alone
+    // does not zero out (m_vecAngVelocity is not a standard datamap property
+    // accessible via SetEntPropVector for vphysics props).
+    MoveType originalMoveType = GetEntityMoveType(entity);
+    if (originalMoveType == MOVETYPE_VPHYSICS)
+    {
+        SetEntityMoveType(entity, MOVETYPE_NONE);
+    }
+
+    float stoppedVelocity[3] = {0.0, 0.0, 0.0};
+    TeleportEntity(entity, origin, angles, stoppedVelocity);
+
+    // Restore physics — the recreated physics object starts with zero velocity.
+    if (originalMoveType == MOVETYPE_VPHYSICS)
+    {
+        SetEntityMoveType(entity, MOVETYPE_VPHYSICS);
+    }
+
+    // Belt-and-suspenders: also zero out the datamap velocity fields.
+    StopHittableMotion(entity);
+}
+
+void StopHittableMotion(int entity)
+{
+    float stoppedVelocity[3] = {0.0, 0.0, 0.0};
+
+    SetEntPropVectorAny(entity, "m_vecVelocity", stoppedVelocity);
+    SetEntPropVectorAny(entity, "m_vecAbsVelocity", stoppedVelocity);
+    // Note: m_vecAngVelocity is not a standard datamap property for vphysics
+    // props — angular velocity is reset via the MOVETYPE_NONE trick in
+    // TeleportHittableToOriginal instead.
 }
 
 public Action HittableOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
@@ -642,6 +690,14 @@ bool GetEntPropVectorAny(int entity, const char[] propName, float value[3])
     return false;
 }
 
+void SetEntPropVectorAny(int entity, const char[] propName, const float value[3])
+{
+    if (HasEntProp(entity, Prop_Send, propName))
+        SetEntPropVector(entity, Prop_Send, propName, value);
+    if (HasEntProp(entity, Prop_Data, propName))
+        SetEntPropVector(entity, Prop_Data, propName, value);
+}
+
 bool GetEntPropStringAny(int entity, const char[] propName, char[] value, int maxlen)
 {
     if (HasEntProp(entity, Prop_Send, propName))
@@ -727,7 +783,7 @@ void PrecacheForkliftAssets()
     if (!IsModelPrecached(FORKLIFT_MODEL))
     {
         PrecacheModel(FORKLIFT_MODEL, true);
-        PrintToServer("[TankReset] Precached forklift model: %s", FORKLIFT_MODEL);
+        PrintToServer("[Tank-training] Precached forklift model: %s", FORKLIFT_MODEL);
     }
 }
 
@@ -751,14 +807,14 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     int prop = CreateEntityByName("prop_physics_override");
     if (prop == -1)
     {
-        PrintToServer("[TankReset] Failed to create prop_physics_override");
+        PrintToServer("[Tank-training] Failed to create prop_physics_override");
         return -1;
     }
 
     // Check if entity index is safe
     if (!CheckIfEntitySafe(prop))
     {
-        PrintToServer("[TankReset] Forklift entity index %d exceeds safe limit", prop);
+        PrintToServer("[Tank-training] Forklift entity index %d exceeds safe limit", prop);
         return -1;
     }
 
@@ -789,7 +845,7 @@ int SpawnForkliftPhysics(const float position[3], const float angles[3], const c
     SetEntProp(prop, Prop_Data, "m_CollisionGroup", 0);
     SetEntityMoveType(prop, MOVETYPE_VPHYSICS);
     
-    PrintToServer("[TankReset] Spawned physical forklift: %s (entity: %d)", actualModel, prop);
+    PrintToServer("[Tank-training] Spawned physical forklift: %s (entity: %d)", actualModel, prop);
     return prop;
 }
 
@@ -822,7 +878,176 @@ void PrintFeatureDisabled(int client)
     CPrintToChat(client, "%t", "Feature Disabled");
 }
 
+bool IsTankTrainingEnabled()
+{
+    return !g_cvDisablePlugin.BoolValue;
+}
+
+void SetTankTrainingEnabled(bool enabled)
+{
+    if (IsTankTrainingEnabled() == enabled)
+    {
+        UpdateTankTrainingAdvertTimer();
+        return;
+    }
+
+    g_cvDisablePlugin.SetBool(!enabled);
+}
+
+void ConVarChanged_TankTrainingState(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+    bool wasEnabled = StringToInt(oldValue) == 0;
+    bool enabled = !convar.BoolValue;
+    ApplyTankTrainingState(enabled, wasEnabled);
+}
+
+void ApplyTankTrainingState(bool enabled, bool wasEnabled)
+{
+    UpdateTankTrainingAdvertTimer();
+
+    if (!g_bMapStarted || enabled == wasEnabled)
+        return;
+
+    if (enabled)
+    {
+        ClearHittableTracking();
+        PrecacheForkliftAssets();
+        PrecacheSound("buttons/button14.wav", true);
+        ScanForIronProps();
+    }
+    else
+    {
+        ClearHittableTracking();
+        g_bTankSpawned = false;
+    }
+}
+
+void UpdateTankTrainingAdvertTimer()
+{
+    if (g_bMapStarted && IsTankTrainingEnabled())
+    {
+        if (g_hTankTrainingAdvertTimer == null)
+        {
+            g_hTankTrainingAdvertTimer = CreateTimer(
+                TANK_TRAINING_ADVERT_INTERVAL,
+                Timer_TankTrainingAdvert,
+                _,
+                TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+        }
+    }
+    else
+    {
+        delete g_hTankTrainingAdvertTimer;
+    }
+}
+
+public Action Timer_TankTrainingAdvert(Handle timer)
+{
+    if (timer != g_hTankTrainingAdvertTimer)
+        return Plugin_Stop;
+
+    if (!g_bMapStarted || !IsTankTrainingEnabled())
+    {
+        g_hTankTrainingAdvertTimer = null;
+        return Plugin_Stop;
+    }
+
+    CPrintToChatAll("[Tank-Training]tank训练模式已开启输入!votetk来关闭或开启tank训练模式");
+    return Plugin_Continue;
+}
+
+bool AreBuiltinVotesAvailable()
+{
+    return GetFeatureStatus(FeatureType_Native, "CreateBuiltinVote") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "DisplayBuiltinVote") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "SetBuiltinVoteArgument") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "SetBuiltinVoteInitiator") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "IsBuiltinVoteInProgress") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "DisplayBuiltinVotePass") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "DisplayBuiltinVoteFail") == FeatureStatus_Available
+        && GetFeatureStatus(FeatureType_Native, "CheckBuiltinVoteDelay") == FeatureStatus_Available;
+}
+
 // ==================== Command handling ====================
+
+public Action Command_VoteTankTraining(int client, int args)
+{
+    if (!IsValidClient(client))
+    {
+        ReplyToCommand(client, "[Tank-Training] This command can only be used by players.");
+        return Plugin_Handled;
+    }
+
+    if (!AreBuiltinVotesAvailable())
+    {
+        CPrintToChat(client, "[Tank-Training] BuiltinVotes extension is not available.");
+        return Plugin_Handled;
+    }
+
+    if (g_hTankTrainingVote != null || !IsNewBuiltinVoteAllowed())
+    {
+        CPrintToChat(client, "[Tank-Training] 当前已有投票正在进行或投票冷却中.");
+        return Plugin_Handled;
+    }
+
+    g_bVoteTargetTrainingEnabled = !IsTankTrainingEnabled();
+    g_hTankTrainingVote = CreateBuiltinVote(
+        TankTrainingVoteHandler,
+        BuiltinVoteType_Custom_YesNo,
+        BuiltinVoteAction_Cancel | BuiltinVoteAction_VoteEnd | BuiltinVoteAction_End);
+
+    if (g_hTankTrainingVote == null)
+    {
+        CPrintToChat(client, "[Tank-Training] 无法发起投票.");
+        return Plugin_Handled;
+    }
+
+    SetBuiltinVoteInitiator(g_hTankTrainingVote, client);
+    SetBuiltinVoteArgument(g_hTankTrainingVote, g_bVoteTargetTrainingEnabled ? "开启tank训练" : "关闭tank训练");
+
+    if (!DisplayBuiltinVoteToAll(g_hTankTrainingVote, 20))
+    {
+        delete g_hTankTrainingVote;
+        CPrintToChat(client, "[Tank-Training] 无法显示投票.");
+    }
+
+    return Plugin_Handled;
+}
+
+public void TankTrainingVoteHandler(Handle vote, BuiltinVoteAction action, int param1, int param2)
+{
+    switch (action)
+    {
+        case BuiltinVoteAction_End:
+        {
+            g_hTankTrainingVote = null;
+            delete vote;
+        }
+
+        case BuiltinVoteAction_Cancel:
+        {
+            DisplayBuiltinVoteFail(vote, view_as<BuiltinVoteFailReason>(param1));
+        }
+
+        case BuiltinVoteAction_VoteEnd:
+        {
+            if (param1 == BUILTINVOTES_VOTE_YES)
+            {
+                SetTankTrainingEnabled(g_bVoteTargetTrainingEnabled);
+                DisplayBuiltinVotePass(vote, g_bVoteTargetTrainingEnabled ? "开启tank训练" : "关闭tank训练");
+                CPrintToChatAll(g_bVoteTargetTrainingEnabled ? "[Tank-Training]tank训练模式已开启" : "[Tank-Training]tank训练模式已关闭");
+            }
+            else if (param1 == BUILTINVOTES_VOTE_NO)
+            {
+                DisplayBuiltinVoteFail(vote, BuiltinVoteFail_Loses);
+            }
+            else
+            {
+                DisplayBuiltinVoteFail(vote, BuiltinVoteFail_Generic);
+            }
+        }
+    }
+}
 
 public Action Command_TankMenu(int client, int args)
 {
