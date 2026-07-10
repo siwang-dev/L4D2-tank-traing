@@ -2,53 +2,53 @@
 {
 	"Plugin Disabled Menu Available"
 	{
-		"en"	"[Tank] Plugin is currently disabled, but the menu is still available."
-		"chi"	"[Tank] 插件当前已禁用，但菜单仍可打开。"
+		"en"	"[Tank-training] Plugin is currently disabled, but the menu is still available."
+		"chi"	"[Tank-training] 插件当前已禁用，但菜单仍可打开。"
 	}
 	"Plugin Disabled"
 	{
-		"en"	"[Tank] Plugin is currently disabled."
-		"chi"	"[Tank] 插件当前已禁用。"
+		"en"	"[Tank-training] Plugin is currently disabled."
+		"chi"	"[Tank-training] 插件当前已禁用。"
 	}
 	"Mode Not Supported"
 	{
-		"en"	"[Tank] Only supported in Campaign/Versus modes."
-		"chi"	"[Tank] 仅支持战役/对抗模式。"
+		"en"	"[Tank-training] Only supported in Campaign/Versus modes."
+		"chi"	"[Tank-training] 仅支持战役/对抗模式。"
 	}
 	"Need Alive"
 	{
-		"en"	"[Tank] You need to respawn first."
-		"chi"	"[Tank] 你需要先复活。"
+		"en"	"[Tank-training] You need to respawn first."
+		"chi"	"[Tank-training] 你需要先复活。"
 	}
 	"Already Tank"
 	{
-		"en"	"[Tank] You are already a Tank."
-		"chi"	"[Tank] 你已经是 Tank 了。"
+		"en"	"[Tank-training] You are already a Tank."
+		"chi"	"[Tank-training] 你已经是 Tank 了。"
 	}
 	"Invalid Class"
 	{
-		"en"	"[Tank] Valid inf: tank hunter jockey smoker charger boomer spitter"
-		"chi"	"[Tank] 可选特感: tank hunter jockey smoker charger boomer spitter"
+		"en"	"[Tank-training] Valid inf: tank hunter jockey smoker charger boomer spitter"
+		"chi"	"[Tan-trainingk] 可选特感: tank hunter jockey smoker charger boomer spitter"
 	}
 	"Become Failed"
 	{
-		"en"	"[Tank] Failed to become infected, please try again."
-		"chi"	"[Tank] 变成感染者失败，请重试。"
+		"en"	"[Tank-training] Failed to become infected, please try again."
+		"chi"	"[Tank-training] 变成感染者失败，请重试。"
 	}
 	"Became Infected All"
 	{
-		"en"	"{red}[Tank]{default} Player {yellow}%N{default} became a {red}%s{default}!"
-		"chi"	"{red}[Tank]{default} 玩家 {yellow}%N{default} 变成了 {red}%s{default}!"
+		"en"	"{red}[Tank-training]{default} Player {yellow}%N{default} became a {red}%s{default}!"
+		"chi"	"{red}[Tank-training]{default} 玩家 {yellow}%N{default} 变成了 {red}%s{default}!"
 	}
 	"Became Infected Self"
 	{
-		"en"	"{red}[Tank]{default} You are now a {red}%s{default}!"
-		"chi"	"{red}[Tank]{default} 你现在是 {red}%s{default}!"
+		"en"	"{red}[Tank-training]{default} You are now a {red}%s{default}!"
+		"chi"	"{red}[Tank-training]{default} 你现在是 {red}%s{default}!"
 	}
 	"Feature Disabled"
 	{
-		"en"	"{red}[Tank]{default} Plugin is disabled, this feature cannot be used."
-		"chi"	"{red}[Tank]{default} 插件已禁用，无法使用此功能。"
+		"en"	"{red}[Tank-training]{default} Plugin is disabled, this feature cannot be used."
+		"chi"	"{red}[Tank-training]{default} 插件已禁用，无法使用此功能。"
 	}
 	"Tank Menu Disabled Title"
 	{
@@ -167,83 +167,83 @@
 	}
 	"Reset All Hittables"
 	{
-		"en"	"[Tank] Reset %d Tank-hit hittables"
-		"chi"	"[Tank] 已重置 %d 个 Tank 击中过的铁"
+		"en"	"[Tank-training] Reset %d Tank-hit hittables"
+		"chi"	"[Tank-training] 已重置 %d 个 Tank 击中过的铁"
 	}
 	"Reset Hittables Count"
 	{
-		"en"	"[Tank] Total hittables on map: %d"
-		"chi"	"[Tank] 地图中的铁总数: %d"
+		"en"	"[Tank-training] Total hittables on map: %d"
+		"chi"	"[Tank-training] 地图中的铁总数: %d"
 	}
 	"Forklift Info Printed"
 	{
-		"en"	"[Tank] Found %d forklifts (check server console for details)"
-		"chi"	"[Tank] 找到 %d 个叉车，详情请查看服务器控制台。"
+		"en"	"[Tank-training] Found %d forklifts (check server console for details)"
+		"chi"	"[Tank-training] 找到 %d 个叉车，详情请查看服务器控制台。"
 	}
 	"Forklift Reset"
 	{
-		"en"	"{red}[Tank]{default} Admin {yellow}%N{default} reset forklifts: {green}%d/%d{default} succeeded"
-		"chi"	"{red}[Tank]{default} 管理员 {yellow}%N{default} 重置叉车: {green}%d/%d{default} 成功"
+		"en"	"{red}[Tank-training]{default} Admin {yellow}%N{default} reset forklifts: {green}%d/%d{default} succeeded"
+		"chi"	"{red}[Tank-training]{default} 管理员 {yellow}%N{default} 重置叉车: {green}%d/%d{default} 成功"
 	}
 	"Force Started"
 	{
-		"en"	"{red}[Tank]{default} Admin {yellow}%N{default} forced the game to start!"
-		"chi"	"{red}[Tank]{default} 管理员 {yellow}%N{default} 强制开始了游戏!"
+		"en"	"{red}[Tank-training]{default} Admin {yellow}%N{default} forced the game to start!"
+		"chi"	"{red}[Tank-training]{default} 管理员 {yellow}%N{default} 强制开始了游戏!"
 	}
 	"Noclip Enabled"
 	{
-		"en"	"{red}[Tank]{default} Noclip enabled."
-		"chi"	"{red}[Tank]{default} 穿墙模式已开启。"
+		"en"	"{red}[Tank-training]{default} Noclip enabled."
+		"chi"	"{red}[Tank-training]{default} 穿墙模式已开启。"
 	}
 	"Noclip Disabled"
 	{
-		"en"	"{red}[Tank]{default} Noclip disabled."
-		"chi"	"{red}[Tank]{default} 穿墙模式已关闭。"
+		"en"	"{red}[Tank-training]{default} Noclip disabled."
+		"chi"	"{red}[Tank-training]{default} 穿墙模式已关闭。"
 	}
 	"Tank Lock Enabled"
 	{
-		"en"	"{red}[Tank]{default} {yellow}%N{default} enabled Tank control lock."
-		"chi"	"{red}[Tank]{default} {yellow}%N{default} 开启了 Tank 控制权锁定。"
+		"en"	"{red}[Tank-training]{default} {yellow}%N{default} enabled Tank control lock."
+		"chi"	"{red}[Tank-training]{default} {yellow}%N{default} 开启了 Tank 控制权锁定。"
 	}
 	"Tank Lock Disabled"
 	{
-		"en"	"{red}[Tank]{default} {yellow}%N{default} disabled Tank control lock."
-		"chi"	"{red}[Tank]{default} {yellow}%N{default} 关闭了 Tank 控制权锁定。"
+		"en"	"{red}[Tank-training]{default} {yellow}%N{default} disabled Tank control lock."
+		"chi"	"{red}[Tank-training]{default} {yellow}%N{default} 关闭了 Tank 控制权锁定。"
 	}
 	"Tank Killed"
 	{
-		"en"	"{red}[Tank]{default} Tank ({yellow}%N{default}) has been killed!"
-		"chi"	"{red}[Tank]{default} Tank ({yellow}%N{default}) 已被击杀!"
+		"en"	"{red}[Tank-training]{default} Tank ({yellow}%N{default}) has been killed!"
+		"chi"	"{red}[Tank-training]{default} Tank ({yellow}%N{default}) 已被击杀!"
 	}
 	"No Cursor Position"
 	{
-		"en"	"{red}[Tank]{default} Cannot determine aim position. Please aim at a valid surface."
-		"chi"	"{red}[Tank]{default} 无法确定准星位置，请瞄准有效表面。"
+		"en"	"{red}[Tank-training]{default} Cannot determine aim position. Please aim at a valid surface."
+		"chi"	"{red}[Tank-training]{default} 无法确定准星位置，请瞄准有效表面。"
 	}
 	"Target Survivor Unavailable"
 	{
-		"en"	"{red}[Tank]{default} Target survivor is no longer available."
-		"chi"	"{red}[Tank]{default} 目标生还者已不可用。"
+		"en"	"{red}[Tank-training]{default} Target survivor is no longer available."
+		"chi"	"{red}[Tank-training]{default} 目标生还者已不可用。"
 	}
 	"Teleported All Survivors"
 	{
-		"en"	"{red}[Tank]{default} {yellow}%N{default} teleported {green}%d{default} survivors to cursor position."
-		"chi"	"{red}[Tank]{default} {yellow}%N{default} 将 {green}%d{default} 名生还者传送到准星位置。"
+		"en"	"{red}[Tank-training]{default} {yellow}%N{default} teleported {green}%d{default} survivors to cursor position."
+		"chi"	"{red}[Tank-training]{default} {yellow}%N{default} 将 {green}%d{default} 名生还者传送到准星位置。"
 	}
 	"Teleported Survivor"
 	{
-		"en"	"{red}[Tank]{default} {yellow}%N{default} teleported {yellow}%N{default} to cursor position."
-		"chi"	"{red}[Tank]{default} {yellow}%N{default} 将 {yellow}%N{default} 传送到准星位置。"
+		"en"	"{red}[Tank-training]{default} {yellow}%N{default} teleported {yellow}%N{default} to cursor position."
+		"chi"	"{red}[Tank-training]{default} {yellow}%N{default} 将 {yellow}%N{default} 传送到准星位置。"
 	}
 	"Aim Entity Not Hittable"
 	{
-		"en"	"{red}[Tank]{default} Aim entity {green}%d{default} (%s) is not a Tank hittable."
-		"chi"	"{red}[Tank]{default} 准星实体 {green}%d{default} (%s) 不是 Tank 可击打铁。"
+		"en"	"{red}[Tank-training]{default} Aim entity {green}%d{default} (%s) is not a Tank hittable."
+		"chi"	"{red}[Tank-training]{default} 准星实体 {green}%d{default} (%s) 不是 Tank 可击打铁。"
 	}
 	"Aim Hittable Header"
 	{
-		"en"	"{red}[Tank]{default} ent:{green}%d{default} ref:{green}%d{default} recorded:%s hitQueue:%s"
-		"chi"	"{red}[Tank]{default} 实体:{green}%d{default} 引用:{green}%d{default} 已记录:%s 重置队列:%s"
+		"en"	"{red}[Tank-training]{default} ent:{green}%d{default} ref:{green}%d{default} recorded:%s hitQueue:%s"
+		"chi"	"{red}[Tank-training]{default} 实体:{green}%d{default} 引用:{green}%d{default} 已记录:%s 重置队列:%s"
 	}
 	"Aim Hittable Model"
 	{
