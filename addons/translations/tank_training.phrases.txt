@@ -62,28 +62,28 @@
 	}
 	"Disabled Suffix"
 	{
-		"en"	" {red}[DISABLED]{default}"
-		"chi"	" {red}[已禁用]{default}"
+		"en"	"[DISABLED]"
+		"chi"	"[已禁用]"
 	}
 	"Menu Force Start"
 	{
-		"en"	"{yellow}Force Start Game{default}"
-		"chi"	"{yellow}强制开始游戏{default}"
+		"en"	"Force Start Game"
+		"chi"	"强制开始游戏}"
 	}
 	"Menu Reset Hittables"
 	{
-		"en"	"{yellow}Reset Hittables{default}"
-		"chi"	"{yellow}重置铁{default}"
+		"en"	"Reset Hittables"
+		"chi"	"重置铁"
 	}
 	"Menu Become Infected"
 	{
-		"en"	"{yellow}Choose Infected Class{default}"
-		"chi"	"{yellow}选择感染者{default}"
+		"en"	"Choose Infected Class"
+		"chi"	"选择感染者"
 	}
 	"Menu Noclip"
 	{
-		"en"	"{yellow}Toggle Noclip (!tnoclip){default}"
-		"chi"	"{yellow}切换穿墙模式 (!tnoclip){default}"
+		"en"	"Toggle Noclip (!tnoclip)"
+		"chi"	"切换穿墙模式 (!tnoclip)"
 	}
 	"Menu Lock Control"
 	{
@@ -92,18 +92,18 @@
 	}
 	"Menu Teleport Survivor"
 	{
-		"en"	"{yellow}Teleport Survivors To Cursor{default}"
-		"chi"	"{yellow}传送生还者到准星{default}"
+		"en"	"Teleport Survivors To Cursor"
+		"chi"	"传送生还者到准星"
 	}
 	"Menu Hittable Info"
 	{
-		"en"	"{yellow}Print Aim Hittable Info{default}"
-		"chi"	"{yellow}打印准星铁信息{default}"
+		"en"	"Print Aim Hittable Info"
+		"chi"	"打印准星铁信息"
 	}
 	"Menu Status"
 	{
-		"en"	"Current Status: {green}%s{default}"
-		"chi"	"当前状态: {green}%s{default}"
+		"en"	"Current Status: %s"
+		"chi"	"当前状态: %s"
 	}
 	"State On"
 	{
