@@ -52,13 +52,13 @@
 	}
 	"Tank Menu Disabled Title"
 	{
-		"en"	"{red}=== Tank Control Menu [PLUGIN DISABLED] ==={default}\n{yellow}All functions unavailable{default}"
-		"chi"	"{red}=== Tank 控制菜单 [插件已禁用] ==={default}\n{yellow}所有功能不可用{default}"
+		"en"	"=== Tank Control Menu [PLUGIN DISABLED] ===All functions unavailable"
+		"chi"	"=== Tank 控制菜单 [插件已禁用] ===所有功能不可用"
 	}
 	"Tank Menu Title"
 	{
-		"en"	"{green}=== Tank Control Menu ==={default}"
-		"chi"	"{green}=== Tank 控制菜单 ==={default}"
+		"en"	"=== Tank Control Menu ==="
+		"chi"	"=== Tank 控制菜单 ==="
 	}
 	"Disabled Suffix"
 	{
@@ -87,8 +87,8 @@
 	}
 	"Menu Lock Control"
 	{
-		"en"	"{green}Tank Control Lock: {yellow}%s{default}"
-		"chi"	"{green}Tank 控制权锁定: {yellow}%s{default}"
+		"en"	"Tank Control Lock: %s"
+		"chi"	"Tank 控制权锁定: %s"
 	}
 	"Menu Teleport Survivor"
 	{
