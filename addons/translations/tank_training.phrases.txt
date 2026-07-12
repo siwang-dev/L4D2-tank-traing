@@ -68,7 +68,7 @@
 	"Menu Force Start"
 	{
 		"en"	"Force Start Game"
-		"chi"	"强制开始游戏}"
+		"chi"	"强制开始游戏"
 	}
 	"Menu Reset Hittables"
 	{
@@ -127,43 +127,43 @@
 	}
 	"Infected Menu Title"
 	{
-		"en"	"{yellow}Choose Infected Class{default}"
-		"chi"	"{yellow}选择要变成的感染者{default}"
+		"en"	"Choose Infected Class"
+		"chi"	"选择要变成的感染者"
 	}
 	"Tank Spawn Menu Title"
 	{
-		"en"	"{yellow}Choose Tank Spawn Position{default}"
-		"chi"	"{yellow}选择 Tank 生成位置{default}"
+		"en"	"Choose Tank Spawn Position"
+		"chi"	"选择 Tank 生成位置"
 	}
 	"Tank Spawn Soul"
 	{
-		"en"	"{yellow}Spawn At Ghost Position{default}"
-		"chi"	"{yellow}在灵魂位置生成{default}"
+		"en"	"Spawn At Ghost Position"
+		"chi"	"在灵魂位置生成"
 	}
 	"Tank Spawn Flow"
 	{
-		"en"	"{yellow}Spawn Tank By Flow{default}"
-		"chi"	"{yellow}按路程生成 Tank{default}"
+		"en"	"Spawn Tank By Flow"
+		"chi"	"按路程生成 Tank"
 	}
 	"Tank Spawn Flow Percent"
 	{
-		"en"	"{yellow}Spawn Tank By Flow ({green}%d%%{default})"
-		"chi"	"{yellow}按路程生成 Tank ({green}%d%%{default})"
+		"en"	"Spawn Tank By Flow (%d%%)"
+		"chi"	"按路程生成 Tank (%d%%)"
 	}
 	"All Survivors"
 	{
-		"en"	"{green}All Survivors{default}"
-		"chi"	"{green}所有生还者{default}"
+		"en"	"All Survivors"
+		"chi"	"所有生还者"
 	}
 	"Survivor Teleport Menu Title"
 	{
-		"en"	"{yellow}=== Teleport Survivors ==={default}"
-		"chi"	"{yellow}=== 传送生还者 ==={default}"
+		"en"	"=== Teleport Survivors ==="
+		"chi"	"=== 传送生还者 ==="
 	}
 	"No Survivors Available"
 	{
-		"en"	"{red}No survivors available{default}"
-		"chi"	"{red}没有可用的生还者{default}"
+		"en"	"No survivors available"
+		"chi"	"}没有可用的生还者"
 	}
 	"Reset All Hittables"
 	{
